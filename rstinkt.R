@@ -45,30 +45,38 @@ chart.RollingPerformance(R = sp500ret["2000::2020"], width = 66,
 ###################################################
 
 #GARCH
-# Specify a standard GARCH model with constant mean
-garchspec <- ugarchspec(mean.model = list(armaOrder = c(0,0)),
-                        variance.model = list(model = "sGARCH"), 
-                        distribution.model = "norm")
 
-# Estimate the model
-garchfit <- ugarchfit(spec = garchspec,data = sp500ret, out.sample = 1000 )
-show(garchfit)
+garch_models <- list("sGARCH", "gjrGARCH","eGARCH")
+
+for (garch_model in garch_models) {
+
+  garchspec <- paste0("garchspec_", garch_model)
+  garchfit <- paste0("garchfit_", garch_model)
+  garchforecast <- paste0("garchforecast_", garch_model)
+  
+  garchspec_value <- ugarchspec(mean.model = list(armaOrder = c(0,0)),
+                     variance.model = list(model = garch_model), 
+                     distribution.model = "norm")
+  
+  garchfit_value <- ugarchfit(spec = garchspec_value,data = sp500ret,
+                    out.sample = 1000 )
+  
+  garchforecast_value <- ugarchforecast(fitORspec = garchfit_value,
+                         n.ahead = 10)
+  
+  assign(garchspec, garchspec_value)                  
+  assign(garchfit, garchfit_value)
+  assign(garchforecast,garchforecast_value)
+  
+}
+
 
 # Use the method sigma to retrieve the estimated volatilities 
-garchvol <- sigma(garchfit) 
-
-# Plot the volatility for 2015
-plot(garchvol["2015"])
-
+#garchvol <- sigma(garchfit) 
 # Compute unconditional volatility
-sqrt(uncvariance(garchfit))
-
+#sqrt(uncvariance(garchfit))
 # Print last 10 ones in garchvol
-tail(garchvol, 10)
-
-# Forecast volatility 5 days ahead and add 
-garchforecast <- ugarchforecast(fitORspec = garchfit, 
-                                n.ahead = 5)
+#tail(garchvol, 10)
 
 
 
