@@ -25,7 +25,7 @@ sp500ret = input_data[,2]
 ###################################################
 #why would you we use GARCH models
 
-################ for initial part, says that vola of returns differ over time
+################ for initial part, say that vola of returns differ over time
 par(mfrow=c(1,2))
 plot(sp500indx)
 plot(sp500ret)
@@ -57,7 +57,7 @@ show(garchfit)
 # Use the method sigma to retrieve the estimated volatilities 
 garchvol <- sigma(garchfit) 
 
-# Plot the volatility for 2017
+# Plot the volatility for 2015
 plot(garchvol["2015"])
 
 # Compute unconditional volatility
