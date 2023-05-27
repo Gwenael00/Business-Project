@@ -13,7 +13,7 @@ library(lubridate)
 
 #import S&P500 data
 #df = read_xls("D:/Master/SS23/Business Project/SP500.xls")
-input_data = read.csv("D:/Master/SS23/Business Project/qsidefvvgiaieddt.csv")
+input_data = read.csv(url("https://github.com/Gwenael00/Business-Project/blob/main/qsidefvvgiaieddt.csv"))
 input_data$caldt <- as.Date(ymd(input_data$caldt), "%Y-%m-%d")
 input_data = as.xts(input_data)
 sp500indx = input_data[,1]
