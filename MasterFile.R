@@ -71,12 +71,10 @@ for (garch_model in garch_models) {
 }
 
 
-# Use the method sigma to retrieve the estimated volatilities 
+#estimated volatilities 
 #garchvol <- sigma(garchfit) 
-# Compute unconditional volatility
+#unconditional volatility
 #sqrt(uncvariance(garchfit))
-# Print last 10 ones in garchvol
-#tail(garchvol, 10)
 
 
 
