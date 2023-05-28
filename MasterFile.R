@@ -45,7 +45,6 @@ chart.RollingPerformance(R = sp500ret["2000::2020"], width = 66,
 ###################################################
 
 #GARCH
-
 garch_models <- list("sGARCH", "gjrGARCH","eGARCH")
 
 for (garch_model in garch_models) {
@@ -53,28 +52,77 @@ for (garch_model in garch_models) {
   garchspec <- paste0("garchspec_", garch_model)
   garchfit <- paste0("garchfit_", garch_model)
   garchforecast <- paste0("garchforecast_", garch_model)
+  garchroll <- paste0("garchroll_", garch_model)
   
-  garchspec_value <- ugarchspec(mean.model = list(armaOrder = c(0,0)),
-                     variance.model = list(model = garch_model), 
-                     distribution.model = "norm")
+  #model specification
+  garchspec_value <- ugarchspec(mean.model = list(armaOrder = c(0,0)), #maybe change armaorder?
+                     variance.model = list(model = garch_model), #maybe arma in mean?
+                     distribution.model = "norm") #maybe change to sstd?
   
+  #rolling backtest
+  garchroll_value <- ugarchroll(garchspec_value, data = sp500ret, n.start = 1260,
+                                refit.window = "moving", refit.every = 20)  
+  
+  #in sample
   garchfit_value <- ugarchfit(spec = garchspec_value,data = sp500ret,
                     out.sample = 1000 )
   
+  #out of sample forecast
   garchforecast_value <- ugarchforecast(fitORspec = garchfit_value,
-                         n.ahead = 10)
+                         n.ahead = 100) 
   
-  assign(garchspec, garchspec_value)                  
+  assign(garchspec, garchspec_value)  
+  assign(garchroll, garchroll_value)
   assign(garchfit, garchfit_value)
   assign(garchforecast,garchforecast_value)
   
 }
 
+#plot insample vs rolling vola e.g. for sGARCH -> make loop
+preds <- as.data.frame(garchroll_sGARCH)
+garchvolroll <- xts( preds$Sigma, order.by = as.Date(rownames(preds)))
+volplot <- plot(sigma(garchfit_sGARCH), col = "darkgrey", lwd = 1.5, main = "In-sample versus rolling vol forecasts")
+volplot <- addSeries(garchvolroll, col = "blue", on = 1)
+plot(volplot)
 
-#estimated volatilities 
+# Analyze RMSE (predicted variance)
+# Analyze Information criteria (goodness of fit for distribution)
+coef(garchfit_gjrGARCH)
+
+
+
+
+
+# Extract the dataframe with predictions from the rolling GARCH estimation
+garchpreds <- as.data.frame(garchroll)
+
+# Extract the VaR 
+garchVaR <- quantile(garchroll, probs = 0.05)
+
+# Extract the volatility from garchpreds
+garchvol <- xts(garchpreds$Sigma, order.by = time(garchVaR))
+
+# Analyze the comovement in a time series plot
+garchplot <- plot(garchvol, ylim = c(-0.1, 0.1))
+garchplot <- addSeries(garchVaR, on = 1, col = "blue")
+plot(garchplot, main = "Daily vol and 5% VaR")
+
+
+
+# Use the method sigma to retrieve the estimated volatilities 
 #garchvol <- sigma(garchfit) 
-#unconditional volatility
+# Compute unconditional volatility
 #sqrt(uncvariance(garchfit))
+# Print last 10 ones in garchvol
+#tail(garchvol, 10)
+
+
+plot(garchfit)
+
+
+
+
+
 
 
 
