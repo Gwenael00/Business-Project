@@ -45,8 +45,10 @@ chart.RollingPerformance(R = sp500ret["2000::2020"], width = 66,
 ###################################################
 
 #GARCH
-garch_models <- list("sGARCH", "gjrGARCH","eGARCH")
 
+garch_models <- list("sGARCH", "gjrGARCH","eGARCH","iGARCH")
+
+#maybe try different parameters for first 5 years, see which model fits best, then apply on remaining 15 years
 for (garch_model in garch_models) {
 
   garchspec <- paste0("garchspec_", garch_model)
@@ -76,49 +78,39 @@ for (garch_model in garch_models) {
   assign(garchfit, garchfit_value)
   assign(garchforecast,garchforecast_value)
   
+  #evaluate model, note: you can also check models properties by using show(garchfit_garch_model)
+  
+  #check significance of parameters
+  round(garchfit@fit$matcoef,5)
+  
+  #Information criteria (prefer small values)
+  infocriteria(garchfit)
+  
+  #if we use constant mean garch model we can use Ljung-Box test -> on returns
+  
 }
 
-#plot insample vs rolling vola e.g. for sGARCH -> make loop
-preds <- as.data.frame(garchroll_sGARCH)
-garchvolroll <- xts( preds$Sigma, order.by = as.Date(rownames(preds)))
-volplot <- plot(sigma(garchfit_sGARCH), col = "darkgrey", lwd = 1.5, main = "In-sample versus rolling vol forecasts")
-volplot <- addSeries(garchvolroll, col = "blue", on = 1)
-plot(volplot)
+#maybe do overlay instead of 4 seperate
+par(mfrow=c(2,2)) 
+for (garch_model in garch_models) {
+  predictions <- as.data.frame(garchroll_sGARCH)
+  #get predicted volatilities
+  garchvolroll <- xts( predictions$Sigma, order.by = as.Date(rownames(predictions)))
+  #insample
+  volplot <- plot(sigma(garchfit_sGARCH), col = "darkgrey", lwd = 1.5, main = "In-sample versus rolling vol forecasts")
+  # rolling (no lookahead bias)
+  volplot <- addSeries(garchvolroll, col = "blue", on = 1)
+  volplot <- addSeries(abs(sp500ret), col = "grey")
+  plot(volplot)  
+}
+
+#we could plot standardized residuals against normaldist to show nonnormality, then redo with skewed studednts t dist
+# there are also prebuild QQ plots that show nonnormality, especially in tails  
+  
+
 
 # Analyze RMSE (predicted variance)
 # Analyze Information criteria (goodness of fit for distribution)
-coef(garchfit_gjrGARCH)
-
-
-
-
-
-# Extract the dataframe with predictions from the rolling GARCH estimation
-garchpreds <- as.data.frame(garchroll)
-
-# Extract the VaR 
-garchVaR <- quantile(garchroll, probs = 0.05)
-
-# Extract the volatility from garchpreds
-garchvol <- xts(garchpreds$Sigma, order.by = time(garchVaR))
-
-# Analyze the comovement in a time series plot
-garchplot <- plot(garchvol, ylim = c(-0.1, 0.1))
-garchplot <- addSeries(garchVaR, on = 1, col = "blue")
-plot(garchplot, main = "Daily vol and 5% VaR")
-
-
-
-# Use the method sigma to retrieve the estimated volatilities 
-#garchvol <- sigma(garchfit) 
-# Compute unconditional volatility
-#sqrt(uncvariance(garchfit))
-# Print last 10 ones in garchvol
-#tail(garchvol, 10)
-
-
-plot(garchfit)
-
 
 
 
